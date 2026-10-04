@@ -83,16 +83,20 @@ class Notifications {
   }
 
   switchNotifications(id, disable, enable) {
-    if (this.connection.connected) {
-      this.connection.sendUTF(JSON.stringify({
-        "method": "switchNotifications",
-        "id": id,
-        "params": [{
-          "disabled": disable,
-          "enabled": enable
-        }],
-        "version": "1.0"
-      }));
+    try {
+      if (this.connection && this.connection.connected) {
+        this.connection.sendUTF(JSON.stringify({
+          "method": "switchNotifications",
+          "id": id,
+          "params": [{
+            "disabled": disable,
+            "enabled": enable
+          }],
+          "version": "1.0"
+        }));
+      }
+    } catch (error) {
+      this.log.error("switchNotifications() failed on endpoint %s: %s", this.lib, error.message);
     }
   }
 

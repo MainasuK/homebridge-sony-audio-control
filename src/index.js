@@ -38,7 +38,11 @@ class SonyAudioControlReceiver {
     this.ip = config.ip;
     this.port = config.port || 10000;
     this.api = new API(this.ip, this.port, log, outputZone);
-    this.api.getApiVersions();
+    // Fire-and-forget: must not reject, or the unhandled rejection kills the
+    // Homebridge child process while the receiver is unreachable.
+    this.api.getApiVersions().catch(error => {
+      this.log.error("getApiVersions() failed: %s", error.message);
+    });
 
     this.accessoryInformation = config.accessoryInformation || {};
     this.manufacturer = this.accessoryInformation.manufacturer || "Sony";
@@ -77,7 +81,11 @@ class SonyAudioControlReceiver {
 
     this.notifications = [];
 
-    this.setNetworkStandby();
+    // Fire-and-forget: setNetworkStandby() already catches internally, but
+    // guard the promise chain so any unexpected rejection cannot crash the bridge.
+    Promise.resolve(this.setNetworkStandby()).catch(error => {
+      this.log.error("setNetworkStandby() failed: %s", error.message);
+    });
   }
 
   identify(callback) {

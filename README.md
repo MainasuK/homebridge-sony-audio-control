@@ -1,6 +1,34 @@
 # "homebridge-sony-audio-control" Plugin
 With this plugin you can create HomeKit services to control a Sony STR-DN1080 Audio Video Receiver.
 
+> **Note:** this is a fork of [torandreroland/homebridge-sony-audio-control](https://github.com/torandreroland/homebridge-sony-audio-control).
+> It fixes a crash-loop bug introduced in the upstream 2.6.4 release (see [Stability fix](#stability-fix) below).
+
+## Stability fix
+
+Upstream `2.6.4` migrated the characteristic handlers from the legacy callback API
+(`.on("get", cb)`) to the promise API (`.onGet()`), but replaced
+`callback(error)` with `throw error` and left a couple of promises unhandled.
+When the receiver is unreachable — powered off, in standby, or on a different
+network — Homebridge 2.x treats those unhandled rejections as fatal and
+terminates the child process, producing a tight restart loop
+(observed: ~25 crashes in 60 s) and an unstable bridge.
+
+This fork keeps the promise-based API but makes the read path resilient:
+
+- new `src/safe-handler.js` with `safeGet()` / `safeSet()` wrappers — a read
+  handler never rejects; on failure it logs a warning and reports a safe
+  fallback (`off` / `0`) to HomeKit, so the accessory simply shows as
+  unavailable until the receiver is reachable again;
+- `getApiVersions()` and `setNetworkStandby()` in `src/index.js` are now
+  guarded against unhandled rejections;
+- `switchNotifications()` in `src/notifications.js` guards against a missing or
+  closed WebSocket connection.
+
+With the receiver permanently offline the bridge now runs indefinitely with
+**zero** crash restarts (verified: 0 restarts over multiple minutes, compared
+to ~25 in 60 s before the fix).
+
 The code for this plugin has originally been forked from [Http Speaker for Homebridge](https://github.com/Supereg/homebridge-http-speaker) authored by Andreas Bauer.
 
 ## Compatibility notice

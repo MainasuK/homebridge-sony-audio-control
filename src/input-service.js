@@ -1,3 +1,5 @@
+import { safeGet, safeSet } from './safe-handler.js';
+
 class InputService {
   constructor(serviceParams, inputName, inputURI) {
     this.api = serviceParams.api;
@@ -11,8 +13,8 @@ class InputService {
 
     this.hapService
       .getCharacteristic(serviceParams.Characteristic.On)
-      .onGet(this.getInputState.bind(this))
-      .onSet(this.setInputState.bind(this));
+      .onGet(safeGet(this.getInputState.bind(this), () => false, this.log, `Input ${inputName}`))
+      .onSet(safeSet(this.setInputState.bind(this), this.log, `Input ${inputName}`));
   }
 
   async getInputState() {

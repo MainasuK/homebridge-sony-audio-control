@@ -1,3 +1,5 @@
+import { safeGet, safeSet } from './safe-handler.js';
+
 class PowerService {
   constructor(serviceParams) {
     this.api = serviceParams.api;
@@ -8,8 +10,8 @@ class PowerService {
 
     this.hapService
       .getCharacteristic(serviceParams.Characteristic.On)
-      .onGet(this.getPowerState.bind(this))
-      .onSet(this.setPowerState.bind(this));
+      .onGet(safeGet(this.getPowerState.bind(this), () => false, this.log, "Sony receiver power"))
+      .onSet(safeSet(this.setPowerState.bind(this), this.log, "Sony receiver power"));
   }
 
   async getPowerState() {

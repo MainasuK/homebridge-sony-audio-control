@@ -1,4 +1,5 @@
 import VolumeCharacteristics from './volume-characteristics.js';
+import { safeGet, safeSet } from './safe-handler.js';
 
 class VolumeLightbulbService {
   constructor(serviceParams, maxVolume) {
@@ -14,13 +15,13 @@ class VolumeLightbulbService {
 
     this.hapService
       .getCharacteristic(serviceParams.Characteristic.On)
-      .onGet(volumeCharacteristics.getMuteState.bind(this))
-      .onSet(volumeCharacteristics.setMuteState.bind(this));
+      .onGet(safeGet(volumeCharacteristics.getMuteState.bind(this), () => false, this.log, "Volume mute"))
+      .onSet(safeSet(volumeCharacteristics.setMuteState.bind(this), this.log, "Volume mute"));
 
     this.hapService
       .addCharacteristic(new serviceParams.Characteristic.Brightness())
-      .onGet(volumeCharacteristics.getVolume.bind(this))
-      .onSet(volumeCharacteristics.setVolume.bind(this));
+      .onGet(safeGet(volumeCharacteristics.getVolume.bind(this), () => 0, this.log, "Volume level"))
+      .onSet(safeSet(volumeCharacteristics.setVolume.bind(this), this.log, "Volume level"));
   }
 }
 

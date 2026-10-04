@@ -1,3 +1,5 @@
+import { safeGet, safeSet } from './safe-handler.js';
+
 class SoundFieldService {
   constructor(serviceParams, soundFieldName, soundFieldValue) {
     this.api = serviceParams.api;
@@ -13,8 +15,8 @@ class SoundFieldService {
 
     this.hapService
       .getCharacteristic(serviceParams.Characteristic.On)
-      .onGet(this.getSoundFieldState.bind(this))
-      .onSet(this.setSoundFieldState.bind(this));
+      .onGet(safeGet(this.getSoundFieldState.bind(this), () => false, this.log, `Sound field ${soundFieldName}`))
+      .onSet(safeSet(this.setSoundFieldState.bind(this), this.log, `Sound field ${soundFieldName}`));
   }
 
   async getSoundFieldState() {
